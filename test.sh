@@ -17,7 +17,7 @@ test_lib() {
   info_exec lib cargo $1 build --verbose --no-default-features
   info_exec lib cargo $1 build --verbose --no-default-features --features=alloc
   info_exec lib/macro cargo $1 build --verbose
-  info_exec lib/macro cargo $1 test --verbose
+  info_exec lib/macro cargo $1 test --verbose --features=data-encoding/std
 }
 
 test_nostd() {

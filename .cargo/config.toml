@@ -1,0 +1,3 @@
+[build]
+# Share the target directory between all crates.
+target-dir = "target"

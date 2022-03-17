@@ -9,6 +9,13 @@ on:
 
 jobs:
   lib:
+    strategy:
+      matrix:
+        crate:
+          - bin
+          - lib
+          - lib/macro
+          - lib/macro/internal
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,4 +27,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: -- --check
+          args: --manifest-path=${{ matrix.crate }}/Cargo.toml -- --check
