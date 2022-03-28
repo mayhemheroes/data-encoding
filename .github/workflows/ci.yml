@@ -1,0 +1,120 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule: [{cron: '38 11 * * *'}]
+
+jobs:
+  build_lib_stable:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib"]'
+      os: '["ubuntu-latest", "windows-latest"]'
+      toolchain: '["stable"]'
+      command: '["build"]'
+      args1: '["", "--release"]'
+      args2: '["", "--no-default-features --features=alloc", "--no-default-features"]'
+  build_lib_nightly:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib"]'
+      toolchain: '["nightly"]'
+      command: '["build"]'
+      args1: '["", "--release"]'
+      args2: '["", "--no-default-features --features=alloc", "--no-default-features"]'
+  build_lib_msrv:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib"]'
+      toolchain: '["1.46"]'
+      command: '["build"]'
+      args1: '["--release"]'
+      args2: '["", "--no-default-features --features=alloc", "--no-default-features"]'
+  build_macro_stable:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib/macro"]'
+      os: '["ubuntu-latest", "windows-latest"]'
+      toolchain: '["stable"]'
+      command: '["build"]'
+      args1: '["", "--release"]'
+  build_macro_nightly:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib/macro"]'
+      toolchain: '["nightly"]'
+      command: '["build"]'
+      args1: '["", "--release"]'
+  build_macro_msrv:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib/macro"]'
+      toolchain: '["1.46"]'
+      command: '["build"]'
+      args1: '["--release"]'
+  build_bin_stable:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin"]'
+      os: '["ubuntu-latest", "windows-latest"]'
+      toolchain: '["stable"]'
+      command: '["build"]'
+      args1: '["--release"]'
+  build_bin_nightly:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin"]'
+      toolchain: '["nightly"]'
+      command: '["build"]'
+      args1: '["--release"]'
+  test:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin", "lib", "lib/macro", "lib/macro/internal"]'
+      command: '["test"]'
+  test_bin:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin"]'
+      execute: shell
+      command: '["./test.sh"]'
+  test_nostd:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["nostd"]'
+      command: '["run"]'
+      args1: '["--release"]'
+      args2: '["", "--features=alloc"]'
+  format:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin", "lib", "lib/macro", "lib/macro/internal", "nostd"]'
+      command: '["fmt"]'
+      args1: '["-- --check"]'
+  clippy:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin", "lib", "lib/macro", "lib/macro/internal", "nostd"]'
+      command: '["clippy"]'
+      args1: '["-- --deny=warnings"]'
+  bench_lib:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["lib"]'
+      toolchain: '["nightly"]'
+      command: '["bench"]'
+  bench_bin:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin"]'
+      toolchain: '["nightly"]'
+      execute: shell
+      command: '["./bench.sh"]'
+  audit:
+    uses: ./.github/workflows/execute.yml
+    with:
+      dir: '["bin", "lib", "lib/macro", "lib/macro/internal"]'
+      execute: audit

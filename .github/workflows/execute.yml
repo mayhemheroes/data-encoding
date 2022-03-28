@@ -1,0 +1,63 @@
+name: execute
+
+on:
+  workflow_call:
+    inputs:
+      dir:
+        type: string
+        required: true
+      os:
+        type: string
+        required: false
+        default: '["ubuntu-latest"]'
+      toolchain:
+        type: string
+        required: false
+        default: '["stable"]'
+      execute:
+        type: string
+        required: false
+        default: cargo
+      command:
+        type: string
+        required: false
+      args1:
+        type: string
+        required: false
+        default: '[""]'
+      args2:
+        type: string
+        required: false
+        default: '[""]'
+
+jobs:
+  execute:
+    strategy:
+      matrix:
+        dir: ${{ fromJSON(inputs.dir) }}
+        os: ${{ fromJSON(inputs.os) }}
+        toolchain: ${{ fromJSON(inputs.toolchain) }}
+        command: ${{ fromJSON(inputs.command) }}
+        args1: ${{ fromJSON(inputs.args1) }}
+        args2: ${{ fromJSON(inputs.args2) }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: ${{ inputs.command }}
+          args: --manifest-path=${{ inputs.dir }}/Cargo.toml ${{ inputs.args1 }} ${{ inputs.args2 }}
+        if: ${{ inputs.execute == 'cargo' }}
+      - run: cd ${{ inputs.dir }} && ${{ inputs.command }} ${{ inputs.args1 }} ${{ inputs.args2 }}
+        if: ${{ inputs.execute == 'shell' }}
+      # Work around https://github.com/actions-rs/audit-check/issues/194
+      - run: echo '[workspace]\nmembers = ["${{ inputs.dir }}"]' > Cargo.toml
+        if: ${{ inputs.execute == 'audit' }}
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ inputs.execute == 'audit' }}

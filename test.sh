@@ -6,36 +6,46 @@ info() {
 }
 
 info_exec() {
-  local dir="$1"; shift
+  local dir=$1; shift
   info "( cd $dir && $* )"
-  ( cd "${dir}" && "$@" )
+  ( cd $dir && "$@" )
 }
 
-test_lib() {
-  info_exec lib cargo $1 build --verbose
-  info_exec lib cargo $1 test --verbose
-  info_exec lib cargo $1 build --verbose --no-default-features
-  info_exec lib cargo $1 build --verbose --no-default-features --features=alloc
-  info_exec lib/macro cargo $1 build --verbose
-  info_exec lib/macro cargo $1 test --verbose --features=data-encoding/std
+test_cargo() {
+  local dir
+  for dir in $(find . -name Cargo.toml | sed 's#^./##;s#/Cargo.toml$##'); do
+    [ $1 = clippy -a $dir = www ] && continue
+    [ $1 = clippy -a $dir = cmp ] && continue
+    [ $1 = build -a $dir = nostd ] && continue
+    [ $1 = test -a $dir = nostd ] && continue
+    info_exec $dir cargo "$@"
+  done
 }
 
-test_nostd() {
-  info_exec nostd cargo $1 run --verbose --release
-  info_exec nostd cargo $1 run --verbose --release --features=alloc
-}
-
-test_bin() {
-  info_exec bin cargo $1 build --verbose
-  info_exec bin cargo $1 test --verbose
-  info_exec bin ./test.sh $1
-}
-
-test_lib +1.46
-test_lib +stable
-test_lib +nightly
-test_nostd +nightly
-test_bin +stable
-test_bin +nightly
+test_cargo fmt -- --check
+test_cargo clippy -- --deny=warnings
+test_cargo audit --deny=warnings
+test_cargo build --verbose
+test_cargo test --verbose
+for v in 1.46 stable nightly; do
+  for r in '' --release; do
+    build="info_exec lib cargo +$v build --verbose"
+    $build $r
+    $build $r --no-default-features
+    $build $r --no-default-features --features=alloc
+    info_exec lib/macro cargo +$v build --verbose $r
+  done
+  info_exec lib cargo +$v test --verbose
+  info_exec lib/macro cargo +$v test --verbose
+done
+info_exec lib cargo fuzz run round_trip -- -runs=0
+info_exec nostd cargo +nightly run --verbose --release
+info_exec nostd cargo +nightly run --verbose --release --features=alloc
+for v in stable nightly; do
+  info_exec bin cargo +$v build --verbose
+  info_exec bin cargo +$v build --verbose --release
+  info_exec bin cargo +$v test --verbose
+  info_exec bin ./test.sh +$v
+done
 
 info "Done"
