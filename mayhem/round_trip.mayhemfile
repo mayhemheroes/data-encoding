@@ -1,0 +1,7 @@
+project: data-encoding
+target: round-trip
+
+cmds:
+  - cmd: /round_trip
+  - cmd: /round_trip_no_inst @@
+    libfuzzer: false
