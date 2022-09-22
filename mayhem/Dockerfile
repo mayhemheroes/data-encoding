@@ -11,11 +11,12 @@ RUN echo building instrumented harnesses && \
     echo done
 
 RUN echo building non-instrumented harnesses && \
-    bash -c "pushd lib/fuzz && cargo +nightly -Z sparse-registry fuzz build --disable-instrumentation && popd" && \
-    mv target/x86_64-unknown-linux-gnu/release/round_trip /round_trip_no_inst && \
+    export RUSTFLAGS="--cfg fuzzing -Clink-dead-code -Cdebug-assertions -C codegen-units=1" && \
+    bash -c "pushd lib/fuzz && cargo +nightly -Z sparse-registry build --release && popd" && \
+    mv target/release/round_trip /round_trip_no_inst && \
     echo done
 
 # Package Stage
 FROM rustlang/rust:nightly
 
-COPY --from=builder /round_trip  /round_trip_no_inst /
+COPY --from=builder /round_trip /round_trip_no_inst /
