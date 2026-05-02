@@ -1,15 +1,19 @@
-name: Coverage
+name: coverage
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   tarpaulin:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: rustup default nightly
+      - uses: actions/checkout@v6.0.2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
       - run: cargo install cargo-tarpaulin
-      - run: cargo tarpaulin --coveralls=${{ secrets.COVERALLS_TOKEN }} --include-files=src/lib.rs
-        working-directory: lib
+      - run: >
+          cd lib && cargo tarpaulin --coveralls=${{ secrets.COVERALLS_TOKEN }}
+          --exclude-files=fuzz --exclude-files=tests --exclude-files=macro
